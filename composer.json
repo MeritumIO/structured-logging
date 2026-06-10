@@ -1,0 +1,51 @@
+{
+  "name": "meritum/structured-logging",
+  "description": "Meritum module for structured exception logging — domain exception model, translation pipeline, PSR-3 reporting, and correlation ID enrichment",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Mike Georgeff",
+      "email": "mike@georgeff.co",
+      "role": "Author"
+    }
+  ],
+  "license": "MIT",
+  "require": {
+    "php": "^8.4",
+    "georgeff/kernel": "^1.6",
+    "psr/log": "^3.0"
+  },
+  "suggest": {
+    "meritum/logger": "Zero-dependency PSR-3 logger writing newline-delimited JSON to stdout"
+  },
+  "require-dev": {
+    "bnf/phpstan-psr-container": "^1.0",
+    "phpunit/phpunit": "^11.0",
+    "phpstan/phpstan": "^2.0",
+    "squizlabs/php_codesniffer": "^3.11"
+  },
+  "autoload": {
+    "psr-4": {
+      "Meritum\\StructuredLogging\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Meritum\\StructuredLogging\\Test\\": "tests/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "scripts": {
+    "test": [
+      "vendor/bin/phpunit"
+    ],
+    "analyze": [
+      "vendor/bin/phpstan"
+    ],
+    "phpcs": [
+      "vendor/bin/phpcs"
+    ]
+  }
+}
