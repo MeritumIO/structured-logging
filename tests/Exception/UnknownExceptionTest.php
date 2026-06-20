@@ -75,4 +75,5 @@ final class UnknownExceptionTest extends TestCase
 
         $this->assertNotSame($exception->context['original_line'], $exception->metadata['line']);
     }
+
 }

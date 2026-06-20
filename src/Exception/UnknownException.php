@@ -16,12 +16,16 @@ final class UnknownException extends DomainException
             'original_line'  => $exception->getLine(),
         ];
 
+        // PDOException::getCode() returns a SQLSTATE string via PHP engine internals,
+        // bypassing the int return type declared on Exception::getCode().
+        $code = $exception->getCode();
+
         parent::__construct(
             $exception->getMessage(),
             Severity::Error,
             $context,
             false,
-            $exception->getCode(),
+            is_int($code) ? $code : 0,
             $exception
         );
     }
