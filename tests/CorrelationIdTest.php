@@ -2,6 +2,7 @@
 
 namespace Meritum\StructuredLogging\Test;
 
+use Georgeff\Kernel\Contract\ResettableInterface;
 use Meritum\StructuredLogging\CorrelationId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -93,6 +94,38 @@ final class CorrelationIdTest extends TestCase
         $id->set('garbage');
 
         $this->assertSame($original, $id->uuid);
+    }
+
+    #[Test]
+    public function test_implements_resettable(): void
+    {
+        $this->assertInstanceOf(ResettableInterface::class, new CorrelationId());
+    }
+
+    #[Test]
+    public function test_reset_generates_a_new_uuid(): void
+    {
+        $id = new CorrelationId();
+        $original = $id->uuid;
+
+        $id->reset();
+
+        $this->assertNotSame($original, $id->uuid);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+            $id->uuid
+        );
+    }
+
+    #[Test]
+    public function test_reset_discards_a_uuid_applied_with_set(): void
+    {
+        $id = new CorrelationId();
+        $id->set(self::VALID_UUID);
+
+        $id->reset();
+
+        $this->assertNotSame(self::VALID_UUID, $id->uuid);
     }
 
     #[Test]

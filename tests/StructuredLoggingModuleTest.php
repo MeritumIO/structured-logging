@@ -2,7 +2,7 @@
 
 namespace Meritum\StructuredLogging\Test;
 
-use Georgeff\Kernel\Environment;
+use Georgeff\Kernel\Environment\Testing;
 use Georgeff\Kernel\Kernel;
 use Georgeff\Kernel\DI\TagRegistryInterface;
 use Meritum\StructuredLogging\Context\CorrelationIdEnricher;
@@ -20,7 +20,7 @@ final class StructuredLoggingModuleTest extends TestCase
 {
     private function makeKernel(): Kernel
     {
-        $kernel = new Kernel(Environment::Testing);
+        $kernel = new Kernel(new Testing());
         $kernel->define(LoggerInterface::class, fn() => new NullLogger());
         $kernel->addModule(new StructuredLoggingModule());
         $kernel->boot();
@@ -45,6 +45,20 @@ final class StructuredLoggingModuleTest extends TestCase
             $container->get(CorrelationId::class),
             $container->get(CorrelationId::class)
         );
+    }
+
+    #[Test]
+    public function test_reset_shared_gives_the_shared_correlation_id_a_new_uuid(): void
+    {
+        $kernel = $this->makeKernel();
+
+        $correlationId = $kernel->getContainer()->get(CorrelationId::class);
+        $correlationId->set('550e8400-e29b-4d94-a716-446655440000');
+
+        $kernel->resetShared();
+
+        $this->assertSame($correlationId, $kernel->getContainer()->get(CorrelationId::class));
+        $this->assertNotSame('550e8400-e29b-4d94-a716-446655440000', $correlationId->uuid);
     }
 
     #[Test]

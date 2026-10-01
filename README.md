@@ -2,6 +2,11 @@
 
 Structured exception logging for the Meritum ecosystem. Provides a domain exception model, a translation pipeline that converts arbitrary exceptions into structured domain exceptions, PSR-3 reporting, and correlation ID enrichment.
 
+## Requirements
+
+- PHP 8.4+
+- [`georgeff/kernel`](https://github.com/MikeGeorgeff/kernel) ^2.0
+
 ## Installation
 
 ```bash
@@ -22,11 +27,15 @@ The module registers the following services:
 
 | Service | Notes |
 |---|---|
-| `CorrelationId` | Singleton. Auto-generates a UUID v4 on first resolution. |
-| `CorrelationIdEnricher` | Tagged as `log.context.enrichers`. Adds `correlation_id` to every log entry. |
-| `ExceptionTranslator` | Collects all `exception.translator.handlers` tagged services. |
+| `CorrelationId` | Shared. Auto-generates a UUID v4 on first resolution, and a new one on `resetShared()`. |
+| `CorrelationIdEnricher` | Tagged with `StructuredLoggingOption::EnricherTag` (`log.context.enrichers`). Adds `correlation_id` to every log entry. |
+| `ExceptionTranslator` | Collects every service tagged with `StructuredLoggingOption::TranslatorTag` (`exception.translator.handlers`). |
 | `ExceptionReporter` | Translates, then logs via the decorated `LoggerInterface`. |
 | `LoggerInterface` | Decorated with `ContextEnrichingLogger` to apply registered enrichers. |
+
+The `StructuredLoggingOption` enum holds both tag names, so you don't need to hardcode the strings when registering your own handlers and enrichers.
+
+To replace one of these services with your own implementation, use `$kernel->override()`. Calling `define()` with an id the module already defines throws a `DefinitionException`.
 
 ## Domain exceptions
 
@@ -70,11 +79,11 @@ The `detail` key carries the per-exception contextual data passed in `$context`.
 
 ## Translation pipeline
 
-The translator converts arbitrary `Throwable` instances into domain exceptions. Handlers are registered as tagged kernel services — the translator collects them automatically at boot.
+The translator converts arbitrary `Throwable` instances into domain exceptions. Handlers are registered as tagged kernel services, and the translator collects them automatically when it's first resolved.
 
 ### Defining a handler
 
-Implement `TranslationHandler` and tag it as `exception.translator.handlers` in your module:
+Implement `TranslationHandler` and tag it with `StructuredLoggingOption::TranslatorTag` in your module:
 
 ```php
 use Throwable;
@@ -107,9 +116,11 @@ final class DatabaseExceptionHandler implements TranslationHandler
 ```
 
 ```php
+use Meritum\StructuredLogging\StructuredLoggingOption;
+
 // In your module's register() method:
 $kernel->define(DatabaseExceptionHandler::class, fn() => new DatabaseExceptionHandler())
-       ->tag('exception.translator.handlers');
+       ->tag(StructuredLoggingOption::TranslatorTag->value);
 ```
 
 Higher `priority()` values win when multiple handlers match the same exception. If no handler matches, the translator wraps the exception in an `UnknownException` and logs it at `error` severity.
@@ -151,15 +162,17 @@ final class AppVersionEnricher implements ContextEnricher
 ```
 
 ```php
+use Meritum\StructuredLogging\StructuredLoggingOption;
+
 $kernel->define(AppVersionEnricher::class, fn() => new AppVersionEnricher())
-       ->tag('log.context.enrichers');
+       ->tag(StructuredLoggingOption::EnricherTag->value);
 ```
 
 Use the `+` operator rather than `array_merge` so that context values already set by the caller are not overwritten.
 
 ## Correlation ID
 
-`CorrelationId` is a singleton auto-generated at boot. It is automatically added to every log entry via `CorrelationIdEnricher`.
+`CorrelationId` is a shared service that generates a UUID v4 when it's first resolved. It is automatically added to every log entry via `CorrelationIdEnricher`.
 
 To overwrite the generated ID from an incoming HTTP request header (e.g. in a PSR-15 middleware):
 
@@ -182,6 +195,20 @@ final class CorrelationIdMiddleware implements MiddlewareInterface
 ```
 
 `set()` validates the value as a UUID v4. Invalid or missing values are silently ignored and the auto-generated ID is preserved — a garbage header from a client is not an exceptional condition.
+
+### Long-running processes
+
+`CorrelationId` implements the kernel's `ResettableInterface`. In a long-running worker or daemon that handles many requests or jobs in one process, call `$kernel->resetShared()` between units of work. `reset()` generates a fresh UUID, so a request without a correlation header gets its own ID instead of inheriting the previous request's:
+
+```php
+while ($job = $queue->next()) {
+    $handler->handle($job);
+
+    $kernel->resetShared();
+}
+```
+
+Middleware that calls `set()` runs at the start of each unit of work, after the reset, so client-supplied IDs keep working unchanged. A UUID passed to the constructor is not restored by `reset()`; the reset always generates a new one. In a traditional PHP-FPM setup each request is its own process, so no reset is needed.
 
 ## Severity levels
 

@@ -5,7 +5,7 @@ namespace Meritum\StructuredLogging;
 use Psr\Log\LoggerInterface;
 use Georgeff\Kernel\KernelInterface;
 use Psr\Container\ContainerInterface;
-use Georgeff\Kernel\Module\ModuleInterface;
+use Georgeff\Kernel\Contract\ModuleInterface;
 use Meritum\StructuredLogging\Context\CorrelationIdEnricher;
 use Meritum\StructuredLogging\Factory\LoggerDecoratorFactory;
 use Meritum\StructuredLogging\Factory\ExceptionReporterFactory;
@@ -20,7 +20,7 @@ final class StructuredLoggingModule implements ModuleInterface
         $kernel->define(
             CorrelationIdEnricher::class,
             fn(ContainerInterface $c) => new CorrelationIdEnricher($c->get(CorrelationId::class))
-        )->tag('log.context.enrichers');
+        )->tag(StructuredLoggingOption::EnricherTag->value);
 
         $kernel->define(ExceptionTranslator::class, new ExceptionTranslatorFactory());
 

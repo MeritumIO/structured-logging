@@ -7,6 +7,7 @@ use Georgeff\Kernel\DI\TagRegistryInterface;
 use Meritum\StructuredLogging\TranslationHandler;
 use Meritum\StructuredLogging\ExceptionTranslator;
 use Meritum\StructuredLogging\Translation\Translator;
+use Meritum\StructuredLogging\StructuredLoggingOption;
 
 final class ExceptionTranslatorFactory
 {
@@ -23,7 +24,7 @@ final class ExceptionTranslatorFactory
     private function getTranslationHandlers(TagRegistryInterface $tags): array
     {
         /** @var TranslationHandler[] $handlers */
-        $handlers = $tags->getTagged('exception.translator.handlers');
+        $handlers = $tags->getTagged(StructuredLoggingOption::TranslatorTag->value);
 
         return $handlers;
     }
