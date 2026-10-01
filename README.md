@@ -1,5 +1,9 @@
 # meritum/structured-logging
 
+[![CI](https://github.com/MeritumIO/structured-logging/actions/workflows/ci.yml/badge.svg)](https://github.com/MeritumIO/structured-logging/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/MeritumIO/structured-logging/badge.svg?branch=main)](https://coveralls.io/github/MeritumIO/structured-logging?branch=main)
+[![Packagist Version](https://img.shields.io/packagist/v/meritum/structured-logging)](https://packagist.org/packages/meritum/structured-logging)
+
 Structured exception logging for the Meritum ecosystem. Provides a domain exception model, a translation pipeline that converts arbitrary exceptions into structured domain exceptions, PSR-3 reporting, and correlation ID enrichment.
 
 ## Requirements
