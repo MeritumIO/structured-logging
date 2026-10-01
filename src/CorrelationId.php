@@ -3,14 +3,20 @@
 namespace Meritum\StructuredLogging;
 
 use Stringable;
+use Georgeff\Kernel\Contract\ResettableInterface;
 
-final class CorrelationId implements Stringable
+final class CorrelationId implements Stringable, ResettableInterface
 {
     public private(set) string $uuid;
 
     public function __construct(?string $uuid = null)
     {
         $this->uuid = (null !== $uuid && $this->isValidUuid($uuid)) ? $uuid : $this->makeUuid();
+    }
+
+    public function reset(): void
+    {
+        $this->uuid = $this->makeUuid();
     }
 
     public function set(string $uuid): void

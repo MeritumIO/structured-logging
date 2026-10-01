@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Container\ContainerInterface;
 use Georgeff\Kernel\DI\TagRegistryInterface;
 use Meritum\StructuredLogging\ContextEnricher;
+use Meritum\StructuredLogging\StructuredLoggingOption;
 use Meritum\StructuredLogging\Logging\ContextEnrichingLogger;
 
 final class LoggerDecoratorFactory
@@ -25,7 +26,7 @@ final class LoggerDecoratorFactory
     private function getContextEnrichers(TagRegistryInterface $tags): array
     {
         /** @var ContextEnricher[] $enrichers */
-        $enrichers = $tags->getTagged('log.context.enrichers');
+        $enrichers = $tags->getTagged(StructuredLoggingOption::EnricherTag->value);
 
         return $enrichers;
     }
